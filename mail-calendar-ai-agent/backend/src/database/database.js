@@ -130,7 +130,7 @@ export async function getUserByEmail(email) {
 
 export async function getAllUsers() {
   return new Promise((resolve, reject) => {
-    db.all('SELECT email, created_at FROM users ORDER BY created_at DESC', [], (err, rows) => {
+    db.all('SELECT email, created_at, access_token, refresh_token FROM users ORDER BY created_at DESC', [], (err, rows) => {
       if (err) {
         logError('Get All Users', err);
         reject(err);

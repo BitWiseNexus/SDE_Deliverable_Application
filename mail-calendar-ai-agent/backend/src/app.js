@@ -9,6 +9,7 @@ import emailRoutes from './routes/emails.js';
 import calendarRoutes from './routes/calendar.js';
 import agentRoutes from './routes/agent.js';
 import dashboardRoutes from './routes/dashboard.js';
+import databaseRoutes from './routes/database.js';
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use('/api/emails', emailRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/agent', agentRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/database', databaseRoutes);
 
 // Health check with system info
 app.get('/health', (req, res) => {
@@ -56,7 +58,8 @@ app.get('/api/info', (req, res) => {
       emails: '/api/emails/*',
       calendar: '/api/calendar/*',
       agent: '/api/agent/*',
-      dashboard: '/api/dashboard/*'
+      dashboard: '/api/dashboard/*',
+      database: '/api/database/*'
     }
   });
 });
@@ -87,7 +90,8 @@ app.use('*', (req, res) => {
       'GET /auth/test',
       'POST /api/agent/process/:email',
       'GET /api/emails/:email',
-      'GET /api/calendar/:email/events'
+      'GET /api/calendar/:email/events',
+      'GET /api/database/users'
     ]
   });
 });
