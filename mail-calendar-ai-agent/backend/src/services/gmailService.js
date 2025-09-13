@@ -163,4 +163,94 @@ class GmailService {
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
-      .replace
+      .replace(/&#39;/g, "'");
+  }
+
+  // Clean email body
+  cleanEmailBody(body) {
+    return body
+      .replace(/\r\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+      .substring(0, 5000) + (body.length > 5000 ? '... [truncated]' : '');
+  }
+
+  // Get multiple email details in batch
+  async getEmailsBatch(userEmail, messageIds) {
+    const emails = [];
+    const errors = [];
+    
+    for (let i = 0; i < messageIds.length; i++) {
+      const messageId = messageIds[i];
+      try {
+        logInfo(`Processing email ${i + 1}/${messageIds.length}: ${messageId}`);
+        
+        // Check if already processed
+        const alreadyProcessed = await isEmailProcessed(messageId);
+        if (alreadyProcessed) {
+          logInfo(`Email ${messageId} already processed, skipping`);
+          continue;
+        }
+        
+        const email = await this.getEmailDetails(userEmail, messageId);
+        emails.push(email);
+        
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } catch (error) {
+        logError(`Batch Processing Email ${messageId}`, error);
+        errors.push({ messageId, error: error.message });
+      }
+    }
+
+    return { emails, errors };
+  }
+
+  // Search emails with specific criteria
+  async searchEmails(userEmail, query, maxResults = 20) {
+    try {
+      await this.initializeGmailClient(userEmail);
+      
+      const response = await this.gmail.users.messages.list({
+        userId: 'me',
+        q: query,
+        maxResults: maxResults
+      });
+
+      await logAgentAction(userEmail, 'search_emails', 'success', 
+        `Search query: ${query}, Found: ${response.data.messages?.length || 0} emails`);
+      
+      return response.data.messages || [];
+    } catch (error) {
+      await logAgentAction(userEmail, 'search_emails', 'error', error.message);
+      logError('Search Emails', error);
+      throw new Error(`Failed to search emails: ${error.message}`);
+    }
+  }
+
+  // Test Gmail connection
+  async testConnection(userEmail) {
+    try {
+      await this.initializeGmailClient(userEmail);
+      
+      const response = await this.gmail.users.getProfile({
+        userId: 'me'
+      });
+
+      logSuccess(`Gmail connection test successful for ${userEmail}`);
+      return { 
+        success: true, 
+        profile: {
+          email: response.data.emailAddress,
+          messagesTotal: response.data.messagesTotal,
+          threadsTotal: response.data.threadsTotal
+        }
+      };
+    } catch (error) {
+      logError('Gmail Connection Test', error);
+      return { success: false, error: error.message };
+    }
+  }
+}
+
+export default new GmailService();
