@@ -50,7 +50,7 @@ export const useAuth = () => {
     try {
       setChecking(true);
       const { authService } = await import('../services/api.js');
-      const response = await authService.checkAuth(email);
+      const response = await authService.getAuthStatus(email);
       
       const isAuthenticated = response.data.authenticated;
       actions.setAuthentication(isAuthenticated);
@@ -76,8 +76,11 @@ export const useAuth = () => {
   const login = () => {
     const email = state.user.email;
     if (email) {
+      // Store email and redirect to quick login
+      localStorage.setItem('userEmail', email);
       window.location.href = `http://localhost:5000/auth/quick-login/${encodeURIComponent(email)}`;
     } else {
+      // No email, redirect to regular login
       window.location.href = 'http://localhost:5000/auth/login?redirect=true';
     }
   };
@@ -106,8 +109,9 @@ export const useAuth = () => {
 
   return {
     ...state.user,
-    checking,
+    loading: checking, // Use the local checking state instead of context loading
     checkAuthStatus,
+    setAuthentication: actions.setAuthentication,
     login,
     logout
   };

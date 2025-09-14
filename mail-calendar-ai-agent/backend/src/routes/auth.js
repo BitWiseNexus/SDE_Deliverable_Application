@@ -1,6 +1,6 @@
 import express from 'express';
 import { google } from 'googleapis';
-import { createUser, getUserByEmail, logAgentAction } from '../database/database.js';
+import { createUser, getUserByEmail, logAgentAction, db } from '../database/database.js';
 import { logError, logSuccess, loadGoogleCredentials } from '../utils/validation.js';
 
 const router = express.Router();
@@ -26,6 +26,40 @@ const SCOPES = [
   'https://www.googleapis.com/auth/calendar',
   'https://www.googleapis.com/auth/userinfo.email'
 ];
+
+// GET /auth/current - Get current authenticated user
+router.get('/current', async (req, res) => {
+  try {
+    // Get first authenticated user from database
+    const user = await new Promise((resolve, reject) => {
+      db.get('SELECT email, created_at FROM users ORDER BY created_at DESC LIMIT 1', [], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
+    if (user) {
+      res.json({ 
+        success: true,
+        user: {
+          email: user.email,
+          authenticated: true
+        }
+      });
+    } else {
+      res.json({ 
+        success: true,
+        user: null
+      });
+    }
+  } catch (error) {
+    logError('Get Current User', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get current user'
+    });
+  }
+});
 
 // GET /auth/login - Start OAuth flow
 router.get('/login', (req, res) => {
@@ -134,12 +168,12 @@ router.get('/google/callback', async (req, res) => {
     
     logSuccess(`🎉 User authenticated successfully: ${userInfo.email}`);
     
-    // Success page - redirect to quick-login for better UX
+    // Success page - redirect to React frontend
     res.send(`
       <html>
         <head>
           <title>🎉 Authentication Successful</title>
-          <meta http-equiv="refresh" content="2;url=/auth/quick-login/${userInfo.email}">
+          <meta http-equiv="refresh" content="2;url=http://localhost:5173?email=${encodeURIComponent(userInfo.email)}&auth=success">
           <style>
             body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background: #f5f5f5; }
             .container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -163,7 +197,7 @@ router.get('/google/callback', async (req, res) => {
             </div>
             
             <p class="info">Redirecting to your dashboard in 2 seconds...</p>
-            <p>If not redirected: <a href="/auth/quick-login/${userInfo.email}" style="color: #4285f4; text-decoration: none;">Click Here</a></p>
+            <p>If not redirected: <a href="http://localhost:5173?email=${encodeURIComponent(userInfo.email)}&auth=success" style="color: #4285f4; text-decoration: none;">Click Here</a></p>
           </div>
         </body>
       </html>
@@ -243,169 +277,15 @@ router.get('/quick-login/:email', async (req, res) => {
     const user = await getUserByEmail(email);
     
     if (user && user.access_token && user.refresh_token) {
-      // User is authenticated - show dashboard
-      res.send(`
-        <html>
-          <head>
-            <title>Mail Calendar AI Agent - Dashboard</title>
-            <style>
-              body { font-family: Arial, sans-serif; text-align: center; margin: 0; background: #f5f5f5; }
-              .header { background: #4285f4; color: white; padding: 20px; }
-              .container { max-width: 800px; margin: 20px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-              .success { color: #4CAF50; font-size: 24px; margin-bottom: 20px; }
-              .btn { background: #4285f4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px; display: inline-block; border: none; cursor: pointer; font-size: 14px; }
-              .btn:hover { background: #3367d6; }
-              .btn.processing { background: #ff9800; }
-              .btn.success { background: #4CAF50; }
-              .btn.error { background: #f44336; }
-              .info { background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 15px 0; }
-              .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
-              .card { background: #f8f9fa; padding: 20px; border-radius: 8px; }
-              .card h3 { margin: 0 0 10px; color: #333; }
-              .result { margin: 20px 0; padding: 15px; border-radius: 5px; }
-              .result.success { background: #e8f5e9; color: #2e7d32; }
-              .result.error { background: #ffebee; color: #c62828; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>📧 Mail Calendar AI Agent</h1>
-              <p>Dashboard for ${email}</p>
-            </div>
-            
-            <div class="container">
-              <div class="success">✅ Ready to Process Emails!</div>
-              
-              <div class="info">
-                <strong>📊 Account Status:</strong><br>
-                🔑 Authenticated: ${new Date(user.created_at).toLocaleDateString()}<br>
-                🔄 Last Updated: ${new Date(user.updated_at).toLocaleDateString()}<br>
-                📧 Email Access: ✅ Enabled<br>
-                📅 Calendar Access: ✅ Enabled
-              </div>
-
-              <div class="grid">
-                <div class="card">
-                  <h3>🤖 Process Emails</h3>
-                  <button class="btn" onclick="processEmails()" id="processBtn">
-                    📧 Start Processing
-                  </button>
-                </div>
-                
-                <div class="card">
-                  <h3>📊 View Data</h3>
-                  <a href="/api/database/emails/${encodeURIComponent(email)}" class="btn" target="_blank">
-                    📧 Processed Emails
-                  </a>
-                </div>
-                
-                <div class="card">
-                  <h3>📅 Calendar</h3>
-                  <a href="/api/calendar/${encodeURIComponent(email)}/ai-events" class="btn" target="_blank">
-                    📅 AI Events
-                  </a>
-                </div>
-                
-                <div class="card">
-                  <h3>📈 Analytics</h3>
-                  <a href="/api/database/stats" class="btn" target="_blank">
-                    📊 Dashboard Stats
-                  </a>
-                </div>
-              </div>
-              
-              <div id="result"></div>
-              
-              <div style="margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
-                <h3>🧪 API Testing</h3>
-                <p>Test the AI agent directly with cURL:</p>
-                <code style="background: white; padding: 10px; border-radius: 4px; display: block; text-align: left; font-size: 12px; overflow-x: auto;">
-curl -X POST http://localhost:5000/api/agent/process/${encodeURIComponent(email)} \\<br>
-&nbsp;&nbsp;-H "Content-Type: application/json" \\<br>
-&nbsp;&nbsp;-d '{"maxEmails": 5, "createCalendarEvents": true}'
-                </code>
-              </div>
-            </div>
-
-            <script>
-              async function processEmails() {
-                const btn = document.getElementById('processBtn');
-                const result = document.getElementById('result');
-                
-                btn.innerHTML = '⏳ Processing...';
-                btn.className = 'btn processing';
-                btn.disabled = true;
-                
-                result.innerHTML = '<div class="result">🔄 Processing your emails...</div>';
-                
-                try {
-                  const response = await fetch('/api/agent/process/${encodeURIComponent(email)}', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ maxEmails: 10, createCalendarEvents: true })
-                  });
-                  
-                  const data = await response.json();
-                  
-                  if (data.success) {
-                    btn.innerHTML = '✅ Processing Complete!';
-                    btn.className = 'btn success';
-                    
-                    const summary = data.results.summary;
-                    result.innerHTML = \`
-                      <div class="result success">
-                        <h3>🎉 Processing Complete!</h3>
-                        <div class="grid">
-                          <div class="card">
-                            <h3>📧 \${summary.processedEmails}</h3>
-                            <p>Emails Processed</p>
-                          </div>
-                          <div class="card">
-                            <h3>📅 \${summary.createdEvents}</h3>
-                            <p>Calendar Events Created</p>
-                          </div>
-                          <div class="card">
-                            <h3>⏭️ \${summary.skippedEmails}</h3>
-                            <p>Emails Skipped</p>
-                          </div>
-                          <div class="card">
-                            <h3>❌ \${summary.errors}</h3>
-                            <p>Errors</p>
-                          </div>
-                        </div>
-                      </div>
-                    \`;
-                  } else {
-                    throw new Error(data.message || 'Processing failed');
-                  }
-                } catch (error) {
-                  btn.innerHTML = '❌ Processing Failed';
-                  btn.className = 'btn error';
-                  result.innerHTML = \`
-                    <div class="result error">
-                      <h3>❌ Processing Failed</h3>
-                      <p>\${error.message}</p>
-                    </div>
-                  \`;
-                }
-                
-                setTimeout(() => {
-                  btn.innerHTML = '🔄 Process Again';
-                  btn.className = 'btn';
-                  btn.disabled = false;
-                }, 3000);
-              }
-            </script>
-          </body>
-        </html>
-      `);
+      // User is authenticated - redirect to React frontend
+      res.redirect(`http://localhost:5173?email=${encodeURIComponent(email)}&auth=success`);
     } else {
-      // User needs to authenticate
+      // User not authenticated - redirect to login
       res.redirect('/auth/login?redirect=true');
     }
   } catch (error) {
-    logError('Quick Login Check', error);
-    res.status(500).send(`
+    logError('Quick Login', error);
+    res.send(`
       <html>
         <body style="text-align: center; margin-top: 50px; font-family: Arial;">
           <h1>❌ Error</h1>
@@ -417,7 +297,7 @@ curl -X POST http://localhost:5000/api/agent/process/${encodeURIComponent(email)
   }
 });
 
-// GET /auth/status/:email - Check authentication status (duplicate route - keeping for backward compatibility)
+// GET /auth/status/:email - Check authentication status
 router.get('/status/:email', async (req, res) => {
   const { email } = req.params;
   

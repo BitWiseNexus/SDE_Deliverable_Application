@@ -16,27 +16,42 @@ const AuthWrapper = ({ children }) => {
 
   useEffect(() => {
     const initAuth = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const emailFromUrl = urlParams.get('email');
-      const authSuccess = urlParams.get('auth') === 'success';
-      
-      let email = emailFromUrl || auth.email;
-      
-      if (email) {
-        await auth.checkAuthStatus(email);
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const emailFromUrl = urlParams.get('email');
+        const authSuccess = urlParams.get('auth') === 'success';
+        
+        // Clean URL if auth success
+        if (authSuccess && emailFromUrl) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        
+        // Get email from URL or localStorage
+        let email = emailFromUrl || auth.email;
+        
+        if (email) {
+          // Store email in localStorage for future sessions
+          if (emailFromUrl && emailFromUrl !== auth.email) {
+            localStorage.setItem('userEmail', emailFromUrl);
+          }
+          await auth.checkAuthStatus(email);
+        } else {
+          // No email available, user needs to login
+          auth.setAuthentication(false);
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        auth.setAuthentication(false);
+      } finally {
+        setInitializing(false);
       }
-      
-      if (authSuccess && email) {
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-      
-      setInitializing(false);
     };
 
     initAuth();
-  }, []);
+  }, []); // Run only once on mount
 
-  if (initializing || auth.loading) {
+  // Show loading only during initialization
+  if (initializing) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <LoadingSpinner message="Initializing application..." />
@@ -44,10 +59,12 @@ const AuthWrapper = ({ children }) => {
     );
   }
 
+  // Show login screen if not authenticated
   if (!auth.authenticated) {
     return <LoginScreen onLogin={auth.login} />;
   }
 
+  // Show main app if authenticated
   return children;
 };
 

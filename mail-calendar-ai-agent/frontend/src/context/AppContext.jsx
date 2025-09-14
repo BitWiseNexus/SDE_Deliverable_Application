@@ -6,7 +6,7 @@ const initialState = {
   user: {
     email: localStorage.getItem('userEmail') || '',
     authenticated: false,
-    loading: true,
+    loading: false, // Don't start with loading true - let initialization handle it
   },
   processing: {
     isProcessing: false,
