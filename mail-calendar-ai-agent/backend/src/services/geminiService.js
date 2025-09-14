@@ -10,7 +10,7 @@ class GeminiService {
     }
     
     this.genAI = new GoogleGenerativeAI(this.apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: "gemini-pro" });
+    this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     
     logSuccess('Gemini AI service initialized');
   }
@@ -22,7 +22,7 @@ class GeminiService {
         Analyze this email and provide a JSON response with the following structure:
         {
           "summary": "Brief summary of the email content (max 200 characters)",
-          "importance_score": 1-10 (10 being most important),
+          "importance_score": integer (1–10, 10 being most important),
           "deadline_info": {
             "has_deadline": true/false,
             "deadline_date": "YYYY-MM-DD format if found, null otherwise",
@@ -33,7 +33,7 @@ class GeminiService {
           "category": "work/personal/promotional/social/other",
           "sentiment": "positive/neutral/negative",
           "keywords": ["key", "words", "from", "email"]
-        }
+        } 
 
         Email to analyze:
         Subject: ${email.subject}
@@ -49,7 +49,8 @@ class GeminiService {
       
       // Try to parse JSON response
       try {
-        const analysis = JSON.parse(text);
+        const cleanText = text.replace(/```json|```/g, '').trim();
+        const analysis = JSON.parse(cleanText);
         logSuccess(`Email analyzed: ${email.subject}`);
         return analysis;
       } catch (parseError) {
@@ -90,8 +91,10 @@ class GeminiService {
       content.match(pattern) || email.subject.match(pattern)
     );
     
+    const snippet = content.length > 150 ? content.substring(0, 150) + '...' : content;
+
     return {
-      summary: `${email.subject} - ${content.substring(0, 150)}...`,
+      summary: `${email.subject} - ${snippet}`,
       importance_score: hasImportantKeywords ? 8 : 5,
       deadline_info: {
         has_deadline: hasDeadline,
