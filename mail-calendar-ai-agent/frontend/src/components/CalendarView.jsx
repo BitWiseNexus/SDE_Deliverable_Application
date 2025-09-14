@@ -86,11 +86,11 @@ const CalendarView = () => {
     const now = new Date();
     
     if (eventDate < now) {
-      return { status: 'past', label: 'Past' };
+      return { status: 'past', label: 'Past', color: 'bg-gray-100 text-gray-600' };
     } else if (eventDate.toDateString() === now.toDateString()) {
-      return { status: 'today', label: 'Today' };
+      return { status: 'today', label: 'Today', color: 'bg-blue-100 text-blue-700' };
     } else {
-      return { status: 'upcoming', label: 'Upcoming' };
+      return { status: 'upcoming', label: 'Upcoming', color: 'bg-green-100 text-green-700' };
     }
   };
 
@@ -110,35 +110,37 @@ const CalendarView = () => {
   }).sort((a, b) => new Date(b.start.dateTime || b.start.date) - new Date(a.start.dateTime || a.start.date));
 
   if (loading) {
-    return <LoadingSpinner message="Loading calendar events..." />;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <LoadingSpinner message="Loading calendar events..." />
+      </div>
+    );
   }
 
   return (
-    <div className="calendar-view">
+    <div className="space-y-6">
       {/* Header Controls */}
-      <div className="calendar-header">
-        <div className="view-controls">
-          <div className="view-mode-selector">
-            <button
-              className={`view-mode-btn ${viewMode === 'ai' ? 'active' : ''}`}
-              onClick={() => setViewMode('ai')}
-            >
-              <Bot className="icon" />
-              AI Created Events
-            </button>
-            <button
-              className={`view-mode-btn ${viewMode === 'all' ? 'active' : ''}`}
-              onClick={() => setViewMode('all')}
-            >
-              <CalendarIcon className="icon" />
-              All Upcoming Events
-            </button>
-          </div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button
+            className={`btn px-4 py-2 ${viewMode === 'ai' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setViewMode('ai')}
+          >
+            <Bot className="w-5 h-5" />
+            AI Created Events
+          </button>
+          <button
+            className={`btn px-4 py-2 ${viewMode === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setViewMode('all')}
+          >
+            <CalendarIcon className="w-5 h-5" />
+            All Upcoming Events
+          </button>
         </div>
 
-        <div className="calendar-actions">
+        <div className="flex items-center gap-3">
           <button className="btn btn-secondary" onClick={loadEvents}>
-            <RefreshCw className="icon" />
+            <RefreshCw className="w-5 h-5" />
             Refresh
           </button>
           
@@ -148,45 +150,45 @@ const CalendarView = () => {
             rel="noopener noreferrer"
             className="btn btn-primary"
           >
-            <ExternalLink className="icon" />
+            <ExternalLink className="w-5 h-5" />
             Open Google Calendar
           </a>
         </div>
       </div>
 
       {/* Stats Section */}
-      <div className="calendar-stats">
-        <div className="stat-item">
-          <div className="stat-number">{upcomingEvents.length}</div>
-          <div className="stat-label">Upcoming Events</div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="card p-6 text-center">
+          <div className="text-3xl font-bold text-blue-600 mb-2">{upcomingEvents.length}</div>
+          <div className="text-gray-600">Upcoming Events</div>
         </div>
         
-        <div className="stat-item">
-          <div className="stat-number">{pastEvents.length}</div>
-          <div className="stat-label">Past Events</div>
+        <div className="card p-6 text-center">
+          <div className="text-3xl font-bold text-gray-600 mb-2">{pastEvents.length}</div>
+          <div className="text-gray-600">Past Events</div>
         </div>
         
         {viewMode === 'ai' && (
-          <div className="stat-item">
-            <div className="stat-number">{events.filter(e => isAIEvent(e)).length}</div>
-            <div className="stat-label">AI Generated</div>
+          <div className="card p-6 text-center">
+            <div className="text-3xl font-bold text-purple-600 mb-2">{events.filter(e => isAIEvent(e)).length}</div>
+            <div className="text-gray-600">AI Generated</div>
           </div>
         )}
       </div>
 
       {/* Events List */}
-      <div className="events-container">
+      <div className="space-y-6">
         {currentEvents.length > 0 ? (
           <>
             {/* Upcoming Events */}
             {upcomingEvents.length > 0 && (
-              <div className="events-section">
-                <h3 className="section-title">
-                  <CalendarIcon className="icon" />
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                  <CalendarIcon className="w-6 h-6" />
                   Upcoming Events ({upcomingEvents.length})
                 </h3>
                 
-                <div className="events-list">
+                <div className="space-y-4">
                   {upcomingEvents.map((event, index) => {
                     const eventStatus = getEventStatus(event);
                     const eventDate = formatEventDate(event.start.dateTime || event.start.date);
@@ -194,46 +196,55 @@ const CalendarView = () => {
                     return (
                       <div
                         key={event.id || index}
-                        className={`event-item ${eventStatus.status} ${selectedEvent?.id === event.id ? 'selected' : ''}`}
+                        className={`card p-6 transition-all cursor-pointer hover:shadow-md ${
+                          selectedEvent?.id === event.id ? 'ring-2 ring-blue-500' : ''
+                        }`}
                         onClick={() => setSelectedEvent(selectedEvent?.id === event.id ? null : event)}
                       >
-                        <div className="event-header">
-                          <div className="event-main">
-                            <div className="event-title">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
                               {isAIEvent(event) && (
-                                <Bot className="ai-indicator" title="Created by AI" />
+                                <span className="badge badge-primary">
+                                  <Bot className="w-3 h-3" />
+                                  AI
+                                </span>
                               )}
+                              <span className={`badge ${eventStatus.color}`}>
+                                {eventStatus.label}
+                              </span>
+                            </div>
+                            
+                            <h4 className="text-lg font-semibold text-gray-900 mb-2">
                               {event.summary || 'No Title'}
-                            </div>
+                            </h4>
                             
-                            <div className="event-time">
-                              <Clock className="icon" />
-                              {eventDate.date} at {eventDate.time}
-                            </div>
-                            
-                            {event.location && (
-                              <div className="event-location">
-                                <MapPin className="icon" />
-                                {event.location}
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-gray-600 text-sm">
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-4 h-4" />
+                                {eventDate.date} at {eventDate.time}
                               </div>
-                            )}
+                              
+                              {event.location && (
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="w-4 h-4" />
+                                  <span className="truncate">{event.location}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
 
-                          <div className="event-actions">
-                            <div className={`event-status-badge ${eventStatus.status}`}>
-                              {eventStatus.label}
-                            </div>
-                            
+                          <div className="flex items-center gap-2 ml-4">
                             {isAIEvent(event) && viewMode === 'ai' && (
                               <button
-                                className="action-btn delete-btn"
+                                className="btn btn-ghost p-2 text-red-600 hover:bg-red-50"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   deleteEvent(event.id);
                                 }}
                                 title="Delete Event"
                               >
-                                <Trash2 className="icon" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             )}
                             
@@ -242,51 +253,51 @@ const CalendarView = () => {
                                 href={event.htmlLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="action-btn"
+                                className="btn btn-ghost p-2 text-blue-600 hover:bg-blue-50"
                                 title="Open in Google Calendar"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <ExternalLink className="icon" />
+                                <ExternalLink className="w-4 h-4" />
                               </a>
                             )}
                           </div>
                         </div>
 
                         {selectedEvent?.id === event.id && (
-                          <div className="event-details">
+                          <div className="mt-6 pt-6 border-t border-gray-200 space-y-4">
                             {event.description && (
-                              <div className="event-description">
-                                <h4>Description:</h4>
-                                <div className="description-content">
+                              <div>
+                                <h5 className="font-semibold text-gray-900 mb-2">Description:</h5>
+                                <div className="text-gray-700 text-sm bg-gray-50 p-4 rounded-lg max-h-32 overflow-y-auto custom-scrollbar">
                                   {event.description.split('\n').map((line, i) => (
-                                    <p key={i}>{line}</p>
+                                    <p key={i} className="mb-1">{line}</p>
                                   ))}
                                 </div>
                               </div>
                             )}
 
                             {isAIEvent(event) && (
-                              <div className="ai-event-info">
-                                <h4>AI Event Details:</h4>
-                                <div className="ai-info-grid">
+                              <div>
+                                <h5 className="font-semibold text-gray-900 mb-2">AI Event Details:</h5>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                                   {event.extendedProperties?.private?.['email-subject'] && (
-                                    <div className="ai-info-item">
-                                      <span className="label">From Email:</span>
-                                      <span className="value">{event.extendedProperties.private['email-subject']}</span>
+                                    <div className="bg-blue-50 p-3 rounded-lg">
+                                      <span className="font-medium text-blue-900">From Email:</span>
+                                      <p className="text-blue-700 mt-1">{event.extendedProperties.private['email-subject']}</p>
                                     </div>
                                   )}
                                   
                                   {event.extendedProperties?.private?.['email-from'] && (
-                                    <div className="ai-info-item">
-                                      <span className="label">Sender:</span>
-                                      <span className="value">{event.extendedProperties.private['email-from']}</span>
+                                    <div className="bg-green-50 p-3 rounded-lg">
+                                      <span className="font-medium text-green-900">Sender:</span>
+                                      <p className="text-green-700 mt-1">{event.extendedProperties.private['email-from']}</p>
                                     </div>
                                   )}
                                   
                                   {event.extendedProperties?.private?.['importance-score'] && (
-                                    <div className="ai-info-item">
-                                      <span className="label">Importance:</span>
-                                      <span className="value">{event.extendedProperties.private['importance-score']}/10</span>
+                                    <div className="bg-orange-50 p-3 rounded-lg">
+                                      <span className="font-medium text-orange-900">Importance:</span>
+                                      <p className="text-orange-700 mt-1">{event.extendedProperties.private['importance-score']}/10</p>
                                     </div>
                                   )}
                                 </div>
@@ -294,16 +305,20 @@ const CalendarView = () => {
                             )}
 
                             {event.attendees && event.attendees.length > 0 && (
-                              <div className="event-attendees">
-                                <h4>
-                                  <Users className="icon" />
+                              <div>
+                                <h5 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                                  <Users className="w-5 h-5" />
                                   Attendees ({event.attendees.length}):
-                                </h4>
-                                <div className="attendees-list">
+                                </h5>
+                                <div className="space-y-2">
                                   {event.attendees.map((attendee, i) => (
-                                    <div key={i} className="attendee">
-                                      <span className="attendee-email">{attendee.email}</span>
-                                      <span className={`attendee-status ${attendee.responseStatus}`}>
+                                    <div key={i} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                                      <span className="text-sm text-gray-700">{attendee.email}</span>
+                                      <span className={`badge ${
+                                        attendee.responseStatus === 'accepted' ? 'badge-success' :
+                                        attendee.responseStatus === 'declined' ? 'badge-error' :
+                                        'badge-warning'
+                                      }`}>
                                         {attendee.responseStatus}
                                       </span>
                                     </div>
@@ -322,57 +337,60 @@ const CalendarView = () => {
 
             {/* Past Events */}
             {pastEvents.length > 0 && (
-              <div className="events-section">
-                <h3 className="section-title">
-                  <Clock className="icon" />
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                  <Clock className="w-6 h-6" />
                   Past Events ({pastEvents.length})
                 </h3>
                 
-                <div className="events-list past-events">
+                <div className="space-y-3">
                   {pastEvents.slice(0, 10).map((event, index) => {
                     const eventDate = formatEventDate(event.start.dateTime || event.start.date);
                     
                     return (
-                      <div key={event.id || index} className="event-item past">
-                        <div className="event-header">
-                          <div className="event-main">
-                            <div className="event-title">
+                      <div key={event.id || index} className="card p-4 opacity-75">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
                               {isAIEvent(event) && (
-                                <Bot className="ai-indicator" title="Created by AI" />
+                                <span className="badge bg-gray-100 text-gray-600">
+                                  <Bot className="w-3 h-3" />
+                                  AI
+                                </span>
                               )}
-                              {event.summary || 'No Title'}
+                              <span className="badge bg-gray-100 text-gray-600">
+                                Completed
+                              </span>
                             </div>
                             
-                            <div className="event-time">
-                              <Clock className="icon" />
+                            <h4 className="font-semibold text-gray-800 mb-1">
+                              {event.summary || 'No Title'}
+                            </h4>
+                            
+                            <div className="flex items-center gap-1 text-gray-600 text-sm">
+                              <Clock className="w-4 h-4" />
                               {eventDate.date} at {eventDate.time}
                             </div>
                           </div>
 
-                          <div className="event-actions">
-                            <div className="event-status-badge past">
-                              Completed
-                            </div>
-                            
-                            {event.htmlLink && (
-                              <a
-                                href={event.htmlLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="action-btn"
-                                title="Open in Google Calendar"
-                              >
-                                <ExternalLink className="icon" />
-                              </a>
-                            )}
-                          </div>
+                          {event.htmlLink && (
+                            <a
+                              href={event.htmlLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-ghost p-2 text-gray-500 hover:bg-gray-50"
+                              title="Open in Google Calendar"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          )}
                         </div>
                       </div>
                     );
                   })}
                   
                   {pastEvents.length > 10 && (
-                    <div className="show-more">
+                    <div className="text-center p-4 text-gray-500">
                       <p>And {pastEvents.length - 10} more past events...</p>
                     </div>
                   )}
@@ -381,10 +399,10 @@ const CalendarView = () => {
             )}
           </>
         ) : (
-          <div className="empty-state">
-            <CalendarIcon className="empty-icon" />
-            <h3>No events found</h3>
-            <p>
+          <div className="text-center py-12">
+            <CalendarIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No events found</h3>
+            <p className="text-gray-600 mb-6">
               {viewMode === 'ai'
                 ? 'No AI-generated events yet. Process some emails with deadlines to create calendar events automatically.'
                 : 'No upcoming events in your calendar.'
@@ -392,12 +410,12 @@ const CalendarView = () => {
             </p>
             
             {viewMode === 'ai' && (
-              <div className="empty-actions">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <button
                   className="btn btn-primary"
                   onClick={() => ui.setActiveTab('dashboard')}
                 >
-                  <Bot className="icon" />
+                  <Bot className="w-5 h-5" />
                   Process Emails
                 </button>
                 
@@ -405,7 +423,7 @@ const CalendarView = () => {
                   className="btn btn-secondary"
                   onClick={() => setViewMode('all')}
                 >
-                  <CalendarIcon className="icon" />
+                  <CalendarIcon className="w-5 h-5" />
                   View All Events
                 </button>
               </div>
@@ -416,27 +434,27 @@ const CalendarView = () => {
 
       {/* Info Section */}
       {viewMode === 'ai' && events.length > 0 && (
-        <div className="calendar-info">
-          <h3>💡 About AI-Generated Events</h3>
-          <div className="info-grid">
-            <div className="info-item">
-              <strong>🤖 Automatic Creation:</strong>
-              <p>Events are automatically created when the AI detects deadlines in your emails with high importance scores.</p>
+        <div className="gradient-bg rounded-xl p-6 border border-primary-200">
+          <h3 className="text-xl font-semibold text-gray-900 mb-4">💡 About AI-Generated Events</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white/50 p-4 rounded-lg">
+              <strong className="text-blue-900">🤖 Automatic Creation:</strong>
+              <p className="text-gray-700 text-sm mt-1">Events are automatically created when the AI detects deadlines in your emails with high importance scores.</p>
             </div>
             
-            <div className="info-item">
-              <strong>📧 Email Context:</strong>
-              <p>Each event includes details from the original email, including sender and importance score for reference.</p>
+            <div className="bg-white/50 p-4 rounded-lg">
+              <strong className="text-green-900">📧 Email Context:</strong>
+              <p className="text-gray-700 text-sm mt-1">Each event includes details from the original email, including sender and importance score for reference.</p>
             </div>
             
-            <div className="info-item">
-              <strong>🔄 Smart Scheduling:</strong>
-              <p>Events are scheduled based on detected deadlines with appropriate reminders set automatically.</p>
+            <div className="bg-white/50 p-4 rounded-lg">
+              <strong className="text-orange-900">🔄 Smart Scheduling:</strong>
+              <p className="text-gray-700 text-sm mt-1">Events are scheduled based on detected deadlines with appropriate reminders set automatically.</p>
             </div>
             
-            <div className="info-item">
-              <strong>✏️ Fully Editable:</strong>
-              <p>All AI-created events can be edited or deleted directly in Google Calendar or from this interface.</p>
+            <div className="bg-white/50 p-4 rounded-lg">
+              <strong className="text-purple-900">✏️ Fully Editable:</strong>
+              <p className="text-gray-700 text-sm mt-1">All AI-created events can be edited or deleted directly in Google Calendar or from this interface.</p>
             </div>
           </div>
         </div>
@@ -445,4 +463,4 @@ const CalendarView = () => {
   );
 };
 
-export default CalendarView;
+export default CalendarView; 
