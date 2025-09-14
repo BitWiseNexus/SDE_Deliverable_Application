@@ -18,26 +18,48 @@ const AuthWrapper = ({ children }) => {
     const initAuth = async () => {
       try {
         const urlParams = new URLSearchParams(window.location.search);
-        const emailFromUrl = urlParams.get('email');
         const authSuccess = urlParams.get('auth') === 'success';
         
         // Clean URL if auth success
-        if (authSuccess && emailFromUrl) {
+        if (authSuccess) {
           window.history.replaceState({}, document.title, window.location.pathname);
         }
         
-        // Get email from URL or localStorage
-        let email = emailFromUrl || auth.email;
-        
-        if (email) {
-          // Store email in localStorage for future sessions
-          if (emailFromUrl && emailFromUrl !== auth.email) {
-            localStorage.setItem('userEmail', emailFromUrl);
+        // First, try to get the authenticated user from the backend
+        try {
+          const response = await fetch('http://localhost:5000/api/database/users');
+          const data = await response.json();
+          
+          if (data.success && data.users.length > 0) {
+            // Use the first authenticated user from the backend
+            const authenticatedEmail = data.users[0].email;
+            console.log('Found authenticated user:', authenticatedEmail);
+            
+            // Update localStorage with the correct email
+            localStorage.setItem('userEmail', authenticatedEmail);
+            
+            // Check auth status with the correct email
+            await auth.checkAuthStatus(authenticatedEmail);
+          } else {
+            // No authenticated users found in backend
+            console.log('No authenticated users found in backend');
+            auth.setAuthentication(false);
           }
-          await auth.checkAuthStatus(email);
-        } else {
-          // No email available, user needs to login
-          auth.setAuthentication(false);
+        } catch (backendError) {
+          console.error('Failed to get authenticated user from backend:', backendError);
+          
+          // Fallback to URL/localStorage method
+          const emailFromUrl = urlParams.get('email');
+          let email = emailFromUrl || auth.email;
+          
+          if (email) {
+            if (emailFromUrl && emailFromUrl !== auth.email) {
+              localStorage.setItem('userEmail', emailFromUrl);
+            }
+            await auth.checkAuthStatus(email);
+          } else {
+            auth.setAuthentication(false);
+          }
         }
       } catch (error) {
         console.error('Auth initialization error:', error);

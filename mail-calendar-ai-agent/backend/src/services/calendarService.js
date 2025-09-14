@@ -304,6 +304,80 @@ class CalendarService {
     }
   }
 
+  // Test event creation and retrieval
+  async testEventCreation(userEmail) {
+    try {
+      await this.initializeCalendarClient(userEmail);
+      
+      // Create a simple test event
+      const testEvent = {
+        summary: '🧪 Test Event - Mail Calendar AI Agent',
+        description: 'This is a test event created by the Mail Calendar AI Agent to verify event creation and retrieval.',
+        start: {
+          dateTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        end: {
+          dateTime: new Date(Date.now() + 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString(), // Tomorrow + 1 hour
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        extendedProperties: {
+          private: {
+            'ai-agent': 'true',
+            'test-event': 'true'
+          }
+        }
+      };
+      
+      // Create the event
+      const createResponse = await this.calendar.events.insert({
+        calendarId: 'primary',
+        resource: testEvent
+      });
+      
+      const createdEvent = createResponse.data;
+      logSuccess(`Test event created with ID: ${createdEvent.id}`);
+      
+      // Immediately try to retrieve the event
+      try {
+        const retrieveResponse = await this.calendar.events.get({
+          calendarId: 'primary',
+          eventId: createdEvent.id
+        });
+        
+        logSuccess(`Test event retrieved successfully: ${retrieveResponse.data.summary}`);
+        
+        return {
+          success: true,
+          message: 'Event creation and retrieval test passed',
+          eventId: createdEvent.id,
+          eventSummary: createdEvent.summary,
+          canRetrieve: true
+        };
+        
+      } catch (retrieveError) {
+        logError('Test Event Retrieval', retrieveError);
+        return {
+          success: false,
+          message: 'Event was created but cannot be retrieved',
+          eventId: createdEvent.id,
+          createSuccess: true,
+          canRetrieve: false,
+          error: retrieveError.message
+        };
+      }
+      
+    } catch (createError) {
+      logError('Test Event Creation', createError);
+      return {
+        success: false,
+        message: 'Event creation failed',
+        createSuccess: false,
+        error: createError.message
+      };
+    }
+  }
+
   // Test calendar connection
   async testConnection(userEmail) {
     try {
