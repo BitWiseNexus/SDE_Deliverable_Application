@@ -13,7 +13,7 @@ dist-ssr
 *.local
 
 .env
-google_credentials.json
+credentials.json
 
 # Editor directories and files
 .vscode/*
