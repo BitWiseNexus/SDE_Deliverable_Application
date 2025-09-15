@@ -11,7 +11,6 @@ if (!fs.existsSync(dbDir)) {
 }
 
 const dbPath = process.env.DATABASE_PATH || './database/mail_calendar.db';
-logInfo(`Database path: ${dbPath}`);
 
 // Create database connection
 const db = new sqlite3.Database(dbPath, (err) => {
