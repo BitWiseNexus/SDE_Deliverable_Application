@@ -1,5 +1,6 @@
 import express from 'express';
 import calendarService from '../services/calendarService.js';
+import { getProcessedEmails } from '../database/database.js';
 import { logError } from '../utils/validation.js';
 
 const router = express.Router();
@@ -54,15 +55,14 @@ router.get('/:email/debug', async (req, res) => {
     // Get events from Google Calendar
     const calendarEvents = await calendarService.getAICreatedEvents(email, 50);
     
-    // Get events from database
-    const { getProcessedEmails } = await import('../database/database.js');
+    // Get events from database (using direct import)
     const dbEmails = await getProcessedEmails(email, 50);
     
     // Compare event IDs
     const comparison = {
       calendarEventIds: calendarEvents.map(e => ({ id: e.id, summary: e.summary })),
-      databaseEventIds: dbEmails.filter(e => e.calendarEventId).map(e => ({ 
-        id: e.calendarEventId, 
+      databaseEventIds: dbEmails.filter(e => e.calendar_event_id).map(e => ({ 
+        id: e.calendar_event_id, 
         subject: e.subject 
       })),
       mismatches: []
@@ -70,12 +70,12 @@ router.get('/:email/debug', async (req, res) => {
     
     // Find mismatches
     dbEmails.forEach(dbEvent => {
-      if (dbEvent.calendarEventId) {
-        const exists = calendarEvents.some(calEvent => calEvent.id === dbEvent.calendarEventId);
+      if (dbEvent.calendar_event_id) {
+        const exists = calendarEvents.some(calEvent => calEvent.id === dbEvent.calendar_event_id);
         if (!exists) {
           comparison.mismatches.push({
             subject: dbEvent.subject,
-            eventId: dbEvent.calendarEventId,
+            eventId: dbEvent.calendar_event_id,
             issue: 'Event ID in database but not found in Google Calendar'
           });
         }
@@ -96,21 +96,22 @@ router.get('/:email/debug', async (req, res) => {
   }
 });
 
-// GET /api/calendar/:email/test - Test event creation and retrieval
+// GET /api/calendar/:email/test - Test calendar connection
 router.get('/:email/test', async (req, res) => {
   const { email } = req.params;
   
   try {
-    const testResult = await calendarService.testEventCreation(email);
+    // Use the existing testConnection method instead of non-existent testEventCreation
+    const testResult = await calendarService.testConnection(email);
     res.json({
       success: true,
       testResult
     });
   } catch (error) {
-    logError('Test Calendar Event Creation', error);
+    logError('Test Calendar Connection', error);
     res.status(500).json({
       error: true,
-      message: 'Failed to test event creation',
+      message: 'Failed to test calendar connection',
       details: error.message
     });
   }

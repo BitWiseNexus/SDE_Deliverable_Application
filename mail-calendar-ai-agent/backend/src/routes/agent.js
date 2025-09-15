@@ -2,7 +2,7 @@ import express from 'express';
 import gmailService from '../services/gmailService.js';
 import geminiService from '../services/geminiService.js';
 import calendarService from '../services/calendarService.js';
-import { saveProcessedEmail, logAgentAction, getProcessedEmails } from '../database/database.js';
+import { saveProcessedEmail, logAgentAction, getProcessedEmails, getAgentLogs } from '../database/database.js';
 import { logError, logSuccess, logInfo } from '../utils/validation.js';
 
 const router = express.Router();
@@ -180,14 +180,21 @@ router.post('/process/:email', async (req, res) => {
 });
 
 // GET /api/agent/status/:email - Get processing status and history
+// GET /api/agent/status/:email - Get processing status and history
 router.get('/status/:email', async (req, res) => {
   const { email } = req.params;
   
   try {
     const processedEmails = await getProcessedEmails(email, 20);
     
-    // Get recent calendar events created by AI
-    const aiEvents = await calendarService.getAICreatedEvents(email, 10);
+    // Get recent calendar events created by AI (with error handling)
+    let aiEvents = [];
+    try {
+      aiEvents = await calendarService.getAICreatedEvents(email, 10);
+    } catch (calendarError) {
+      logError('Get AI Events in Status', calendarError);
+      // Continue without calendar events rather than failing completely
+    }
     
     const stats = {
       totalProcessedEmails: processedEmails.length,
@@ -284,7 +291,6 @@ router.get('/logs/:email', async (req, res) => {
   const { limit = 50 } = req.query;
   
   try {
-    const { getAgentLogs } = await import('../database/database.js');
     const logs = await getAgentLogs(email, parseInt(limit));
     
     res.json({

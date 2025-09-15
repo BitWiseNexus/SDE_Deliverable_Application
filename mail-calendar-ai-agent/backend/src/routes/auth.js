@@ -28,22 +28,25 @@ const SCOPES = [
 ];
 
 // GET /auth/current - Get current authenticated user
+// GET /auth/current - Get current authenticated user
 router.get('/current', async (req, res) => {
   try {
-    // Get first authenticated user from database
-    const user = await new Promise((resolve, reject) => {
-      db.get('SELECT email, created_at FROM users ORDER BY created_at DESC LIMIT 1', [], (err, row) => {
+    // Get all users and return the most recent one
+    const users = await new Promise((resolve, reject) => {
+      db.all('SELECT email, created_at FROM users ORDER BY created_at DESC', [], (err, rows) => {
         if (err) reject(err);
-        else resolve(row);
+        else resolve(rows);
       });
     });
 
-    if (user) {
+    if (users && users.length > 0) {
+      const mostRecentUser = users[0];
       res.json({ 
         success: true,
         user: {
-          email: user.email,
-          authenticated: true
+          email: mostRecentUser.email,
+          authenticated: true,
+          authenticatedAt: mostRecentUser.created_at
         }
       });
     } else {

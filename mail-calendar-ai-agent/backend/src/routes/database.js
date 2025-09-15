@@ -16,6 +16,7 @@ router.get('/tables', (req, res) => {
 });
 
 // GET /api/database/users - View all users
+// GET /api/database/users - View all users
 router.get('/users', async (req, res) => {
   try {
     const users = await getAllUsers();
@@ -38,11 +39,21 @@ router.get('/users', async (req, res) => {
           });
       });
 
+      // Check if user has tokens without exposing them
+      const hasTokens = await new Promise((resolve, reject) => {
+        db.get('SELECT access_token, refresh_token FROM users WHERE email = ?', 
+          [user.email], (err, row) => {
+            if (err) reject(err);
+            else resolve(!!(row && row.access_token && row.refresh_token));
+          });
+      });
+
       return {
-        ...user,
+        email: user.email,
+        created_at: user.created_at,
         processedEmailsCount: processedCount,
         agentLogsCount: logsCount,
-        hasTokens: !!(user.access_token && user.refresh_token)
+        hasTokens: hasTokens
       };
     }));
 
