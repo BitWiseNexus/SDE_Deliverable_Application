@@ -10,7 +10,11 @@ import {
   AlertCircle,
   Activity,
   Bot,
-  RefreshCw
+  RefreshCw,
+  Lightbulb,
+  Target,
+  Repeat,
+  Star
 } from 'lucide-react';
 import LoadingSpinner from './LoadingSpinner.jsx';
 import StatCard from './StatCard.jsx';
@@ -71,32 +75,40 @@ const Dashboard = () => {
   const stats = dashboardData.stats || {};
 
   return (
-    <div className="space-y-8">
-      {/* Welcome Section */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold text-gray-900">Welcome back! 👋</h2>
-          <p className="text-gray-600 mt-2">Here's what's happening with your email processing</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+      {/* Header / Actions */}
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-tr from-white via-slate-50 to-slate-100 p-6 md:p-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div className="space-y-2">
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-slate-900">
+              Welcome back
+            </h2>
+            <p className="text-sm md:text-base text-slate-600 max-w-xl leading-relaxed">
+              Overview of your automated email processing, calendar enrichment and agent activity.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              className="btn btn-primary relative group px-5 py-2.5 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+              onClick={handleQuickProcess}
+              disabled={processing.isProcessing}
+            >
+              <Bot className="w-5 h-5" />
+              <span>{processing.isProcessing ? 'Processing…' : 'Quick Process'}</span>
+              {processing.isProcessing && (
+                <span className="absolute inset-0 rounded-md ring-1 ring-inset ring-primary-400/40 animate-pulse" aria-hidden="true" />
+              )}
+            </button>
+            <button
+              className="btn btn-secondary px-5 py-2.5 hover:bg-slate-100/70 cursor-pointer"
+              onClick={loadDashboardData}
+            >
+              <RefreshCw className="w-5 h-5" />
+              Refresh
+            </button>
+          </div>
         </div>
-        
-        <div className="flex items-center gap-3">
-          <button 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
-            onClick={handleQuickProcess}
-            disabled={processing.isProcessing}
-          >
-            <Bot className="w-5 h-5" />
-            {processing.isProcessing ? 'Processing...' : 'Quick Process'}
-          </button>
-          
-          <button 
-            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
-            onClick={loadDashboardData}
-          >
-            <RefreshCw className="w-5 h-5" />
-            Refresh
-          </button>
-        </div>
+        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-gradient-to-br from-primary-200/40 to-primary-300/10 blur-3xl" />
       </div>
 
       {/* Stats Grid */}
@@ -108,7 +120,6 @@ const Dashboard = () => {
           color="blue"
           subtitle="All time"
         />
-        
         <StatCard
           title="Calendar Events Created"
           value={stats.emailsWithEvents || 0}
@@ -116,7 +127,6 @@ const Dashboard = () => {
           color="green"
           subtitle="From deadlines"
         />
-        
         <StatCard
           title="Average Importance"
           value={stats.avgImportance ? `${stats.avgImportance}/10` : 'N/A'}
@@ -124,7 +134,6 @@ const Dashboard = () => {
           color="orange"
           subtitle="Email importance score"
         />
-        
         <StatCard
           title="Success Rate"
           value={stats.agentLogs > 0 ? `${Math.round((stats.successfulActions / stats.agentLogs) * 100)}%` : 'N/A'}
@@ -136,85 +145,90 @@ const Dashboard = () => {
 
       {/* Processing Results */}
       {processing.results && (
-        <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Activity className="w-6 h-6" />
-            Last Processing Results
-          </h3>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-900">{processing.results.summary.processedEmails}</div>
-              <div className="text-sm text-blue-700">Emails Processed</div>
+        <div className="rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-sm p-6 md:p-7">
+          <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+            <h3 className="text-lg md:text-xl font-semibold text-slate-900 flex items-center gap-2">
+              <Activity className="w-5 h-5" />
+              Last Processing Results
+            </h3>
+            {processing.lastProcessing && (
+              <p className="text-xs md:text-sm text-slate-500 flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                {new Date(processing.lastProcessing).toLocaleString()}
+              </p>
+            )}
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-slate-50/60">
+            <div className="flex flex-col items-center justify-center gap-1 py-5 px-2">
+              <span className="text-2xl font-semibold text-slate-900 tracking-tight">{processing.results.summary.processedEmails}</span>
+              <span className="text-xs font-medium text-slate-500 uppercase">Processed</span>
             </div>
-            
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-900">{processing.results.summary.createdEvents}</div>
-              <div className="text-sm text-green-700">Events Created</div>
+            <div className="flex flex-col items-center justify-center gap-1 py-5 px-2">
+              <span className="text-2xl font-semibold text-green-600 tracking-tight">{processing.results.summary.createdEvents}</span>
+              <span className="text-xs font-medium text-slate-500 uppercase">Events</span>
             </div>
-            
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-gray-900">{processing.results.summary.skippedEmails}</div>
-              <div className="text-sm text-gray-700">Emails Skipped</div>
+            <div className="flex flex-col items-center justify-center gap-1 py-5 px-2">
+              <span className="text-2xl font-semibold text-slate-800 tracking-tight">{processing.results.summary.skippedEmails}</span>
+              <span className="text-xs font-medium text-slate-500 uppercase">Skipped</span>
             </div>
-            
-            <div className="text-center p-4 bg-red-50 rounded-lg">
-              <div className="text-2xl font-bold text-red-900">{processing.results.summary.errors}</div>
-              <div className="text-sm text-red-700">Errors</div>
+            <div className="flex flex-col items-center justify-center gap-1 py-5 px-2">
+              <span className="text-2xl font-semibold text-red-600 tracking-tight">{processing.results.summary.errors}</span>
+              <span className="text-xs font-medium text-slate-500 uppercase">Errors</span>
             </div>
           </div>
-          
-          {processing.lastProcessing && (
-            <p className="text-gray-600 text-sm flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              Last processed: {new Date(processing.lastProcessing).toLocaleString()}
-            </p>
-          )}
         </div>
       )}
 
       {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Mail className="w-6 h-6" />
-            Recent Processed Emails
-          </h3>
-          
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        {/* Recent Emails */}
+        <div className="rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-sm p-6 md:p-7 flex flex-col">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg md:text-xl font-semibold text-slate-900 flex items-center gap-2">
+              <Mail className="w-5 h-5" />
+              Recent Processed Emails
+            </h3>
+            <span className="text-xs text-slate-500 font-medium">Latest {dashboardData.recentEmails.length}</span>
+          </div>
           {dashboardData.recentEmails.length > 0 ? (
-            <div className="space-y-4">
+            <ul className="space-y-3">
               {dashboardData.recentEmails.map((email, index) => (
-                <div key={email.id || index} className="p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-gray-900 truncate">{email.subject || 'No Subject'}</div>
-                      <div className="text-sm text-gray-600 mt-1 flex items-center gap-4">
-                        <span className="truncate">{email.sender}</span>
+                <li
+                  key={email.id || index}
+                  className="group relative rounded-xl border border-slate-100 bg-white hover:border-slate-200 transition-colors px-4 py-3 flex flex-col gap-1"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-slate-900 truncate tracking-tight">
+                        {email.subject || 'No Subject'}
+                      </p>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                        <span className="truncate max-w-[10rem]">{email.sender}</span>
                         <span className="flex items-center gap-1">
-                          Importance: {email.importanceScore || 0}/10
+                          <Star className="w-3.5 h-3.5 text-amber-500" />
+                          {email.importanceScore || 0}/10
                         </span>
                         {email.hasCalendarEvent && (
-                          <span className="text-green-600 flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            Event Created
+                          <span className="flex items-center gap-1 text-green-600">
+                            <Calendar className="w-3.5 h-3.5" />
+                            Event
                           </span>
                         )}
                       </div>
                     </div>
-                    
-                    <div className="text-sm text-gray-500">
+                    <time className="text-[11px] whitespace-nowrap font-medium text-slate-400">
                       {new Date(email.processedAt).toLocaleDateString()}
-                    </div>
+                    </time>
                   </div>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           ) : (
-            <div className="text-center py-8">
-              <Mail className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 mb-4">No emails processed yet</p>
-              <button 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            <div className="flex flex-col items-center justify-center flex-1 py-10 text-center">
+              <Mail className="w-10 h-10 text-slate-300 mb-4" />
+              <p className="text-slate-500 text-sm mb-4">No emails processed yet</p>
+              <button
+                className="btn btn-primary cursor-pointer"
                 onClick={handleQuickProcess}
               >
                 Process Some Emails
@@ -223,20 +237,23 @@ const Dashboard = () => {
           )}
         </div>
 
-        <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Activity className="w-6 h-6" />
+        {/* Agent Logs */}
+        <div className="rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-sm p-6 md:p-7 flex flex-col">
+          <h3 className="text-lg md:text-xl font-semibold text-slate-900 mb-6 flex items-center gap-2">
+            <Activity className="w-5 h-5" />
             Recent Agent Activity
           </h3>
-          
           {dashboardData.recentLogs.length > 0 ? (
-            <div className="space-y-4">
+            <ul className="space-y-3">
               {dashboardData.recentLogs.map((log, index) => (
-                <div key={log.id || index} className="flex items-start gap-3 p-3 border border-gray-100 rounded-lg">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    log.status === 'success' ? 'bg-green-100 text-green-600' : 
-                    log.status === 'error' ? 'bg-red-100 text-red-600' : 
-                    'bg-gray-100 text-gray-600'
+                <li
+                  key={log.id || index}
+                  className="flex items-start gap-3 rounded-xl border border-slate-100 bg-white px-4 py-3" 
+                >
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-medium ${
+                    log.status === 'success' ? 'bg-green-50 text-green-600 ring-1 ring-green-200' :
+                    log.status === 'error' ? 'bg-red-50 text-red-600 ring-1 ring-red-200' :
+                    'bg-slate-50 text-slate-600 ring-1 ring-slate-200'
                   }`}>
                     {log.status === 'success' ? (
                       <CheckCircle className="w-4 h-4" />
@@ -246,48 +263,77 @@ const Dashboard = () => {
                       <Clock className="w-4 h-4" />
                     )}
                   </div>
-                  
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-900">{log.action.replace(/_/g, ' ')}</div>
-                    <div className="text-sm text-gray-600 truncate">{log.details}</div>
-                    <div className="text-xs text-gray-500 mt-1">
+                    <p className="text-sm font-medium text-slate-900 leading-snug truncate">
+                      {log.action.replace(/_/g, ' ')}
+                    </p>
+                    <p className="text-xs text-slate-500 truncate">{log.details}</p>
+                    <p className="text-[10px] text-slate-400 mt-1 tracking-wide">
                       {new Date(log.created_at).toLocaleString()}
-                    </div>
+                    </p>
                   </div>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           ) : (
-            <div className="text-center py-8">
-              <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">No recent activity</p>
+            <div className="flex flex-col items-center justify-center flex-1 py-10 text-center">
+              <Activity className="w-10 h-10 text-slate-300 mb-4" />
+              <p className="text-slate-500 text-sm">No recent activity</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Quick Tips */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
-        <h3 className="text-xl font-semibold text-gray-900 mb-4">💡 Tips for Better Results</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-white/50 p-4 rounded-lg">
-            <strong className="text-blue-900">📧 Email Processing:</strong>
-            <p className="text-gray-700 text-sm mt-1">Process emails regularly to catch important deadlines. The AI works best with recent emails.</p>
+      {/* Optimization Tips */}
+      <div className="rounded-2xl border border-slate-200 bg-gradient-to-tr from-slate-50 via-white to-slate-100 p-6 md:p-8">
+        <h3 className="text-lg md:text-xl font-semibold text-slate-900 mb-6 flex items-center gap-2">
+          <Lightbulb className="w-5 h-5 text-amber-500" />
+          Optimization Tips
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="group relative rounded-xl border border-slate-200 bg-white/90 p-4 transition-shadow hover:shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center ring-1 ring-blue-100">
+                <Mail className="w-4 h-4" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-slate-900">Regular Processing</p>
+                <p className="text-xs leading-relaxed text-slate-600">Run processing frequently to surface new deadlines when they are most actionable.</p>
+              </div>
+            </div>
           </div>
-          
-          <div className="bg-white/50 p-4 rounded-lg">
-            <strong className="text-green-900">📅 Calendar Integration:</strong>
-            <p className="text-gray-700 text-sm mt-1">Enable calendar event creation to automatically add important deadlines to your Google Calendar.</p>
+          <div className="group relative rounded-xl border border-slate-200 bg-white/90 p-4 transition-shadow hover:shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-md bg-green-50 text-green-600 flex items-center justify-center ring-1 ring-green-100">
+                <Calendar className="w-4 h-4" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-slate-900">Calendar Sync</p>
+                <p className="text-xs leading-relaxed text-slate-600">Enable event creation to capture important dates without manual effort.</p>
+              </div>
+            </div>
           </div>
-          
-          <div className="bg-white/50 p-4 rounded-lg">
-            <strong className="text-orange-900">🎯 Importance Scoring:</strong>
-            <p className="text-gray-700 text-sm mt-1">Emails scored 7+ are considered high importance. Review these first for urgent items.</p>
+          <div className="group relative rounded-xl border border-slate-200 bg-white/90 p-4 transition-shadow hover:shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center ring-1 ring-amber-100">
+                <Target className="w-4 h-4" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-slate-900">Importance Focus</p>
+                <p className="text-xs leading-relaxed text-slate-600">Review items scoring 7+ first to prioritize meaningful actions.</p>
+              </div>
+            </div>
           </div>
-          
-          <div className="bg-white/50 p-4 rounded-lg">
-            <strong className="text-purple-900">🔄 Regular Processing:</strong>
-            <p className="text-gray-700 text-sm mt-1">Set up a routine to process emails daily. This helps maintain an organized inbox and calendar.</p>
+          <div className="group relative rounded-xl border border-slate-200 bg-white/90 p-4 transition-shadow hover:shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center ring-1 ring-purple-100">
+                <Repeat className="w-4 h-4" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-slate-900">Consistent Routine</p>
+                <p className="text-xs leading-relaxed text-slate-600">Daily processing keeps the knowledge base fresh and organized.</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
