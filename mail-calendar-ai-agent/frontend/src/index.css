@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-/* Tailwind CSS 4.1 Theme Configuration */
 @theme {
   --color-primary-50: #eff6ff;
   --color-primary-100: #dbeafe;
@@ -13,7 +12,6 @@
   --color-primary-800: #1e40af;
   --color-primary-900: #1e3a8a;
   
-  /* Blue colors for compatibility */
   --color-blue-50: #eff6ff;
   --color-blue-100: #dbeafe;
   --color-blue-200: #bfdbfe;
@@ -67,7 +65,6 @@
   --animate-pulse-fast: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Custom Components */
 @layer components {
   .btn {
     @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
@@ -118,7 +115,6 @@
   }
 }
 
-/* Custom Utilities */
 @layer utilities {
   .custom-scrollbar {
     scrollbar-width: thin;
@@ -157,7 +153,6 @@
   }
 }
 
-/* Pointer cursor defaults (plain CSS for broad compatibility) */
 button,
 [role="button"],
 .btn {

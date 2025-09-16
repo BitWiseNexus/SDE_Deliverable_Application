@@ -297,10 +297,31 @@ class CalendarService {
       logSuccess(`Deleted calendar event: ${eventId}`);
       return true;
     } catch (error) {
+      // Make delete idempotent: treat already-deleted/not-found as success
+      const status = error?.response?.status || error?.code;
+      const message = error?.message || '';
+      const reason = error?.response?.data?.error?.errors?.[0]?.reason;
+
+      const isAlreadyGone = 
+        status === 404 ||
+        status === 410 ||
+        reason === 'notFound' ||
+        reason === 'deleted' ||
+        /not found/i.test(message) ||
+        /has been deleted/i.test(message) ||
+        /Resource has been deleted/i.test(message);
+
+      if (isAlreadyGone) {
+        const infoMsg = `Event ${eventId} already deleted or not found; treating as success`;
+        logInfo(infoMsg);
+        await logAgentAction(userEmail, 'delete_calendar_event', 'success', infoMsg);
+        return true;
+      }
+
       await logAgentAction(userEmail, 'delete_calendar_event', 'error', 
-        `Failed to delete event ${eventId}: ${error.message}`);
+        `Failed to delete event ${eventId}: ${message}`);
       logError('Delete Calendar Event', error);
-      throw new Error(`Failed to delete calendar event: ${error.message}`);
+      throw new Error(`Failed to delete calendar event: ${message}`);
     }
   }
 

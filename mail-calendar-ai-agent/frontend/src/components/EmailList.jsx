@@ -1,4 +1,3 @@
-// Clean, de-duplicated EmailList component after resolving corruption
 import React, { useState, useEffect } from 'react';
 import { useAuth, useUI } from '../hooks/useApi.js';
 import { databaseService } from '../services/api.js';

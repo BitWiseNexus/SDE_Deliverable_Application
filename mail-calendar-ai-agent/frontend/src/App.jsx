@@ -10,7 +10,6 @@ import Notifications from './components/Notifications.jsx';
 import LoadingSpinner from './components/LoadingSpinner.jsx';
 import { Mail, Calendar, Settings as SettingsIcon, BarChart3, Bot, LogIn } from 'lucide-react';
 
-/* ---------------- Auth Wrapper ---------------- */
 const AuthWrapper = ({ children }) => {
   const auth = useAuth();
   const [initializing, setInitializing] = useState(true);
@@ -71,7 +70,6 @@ const AuthWrapper = ({ children }) => {
   return children;
 };
 
-/* ---------------- Login Screen ---------------- */
 const LoginScreen = ({ onLogin }) => {
   const [email, setEmail] = useState('');
 
@@ -143,7 +141,6 @@ const LoginScreen = ({ onLogin }) => {
   );
 };
 
-/* ---------------- Main Content ---------------- */
 const AppContent = () => {
   const ui = useUI();
   const auth = useAuth();
@@ -295,7 +292,6 @@ const AppContent = () => {
   );
 };
 
-/* ---------------- Root ---------------- */
 const App = () => (
   <AppProvider>
     <AuthWrapper>

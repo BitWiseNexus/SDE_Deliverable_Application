@@ -1,6 +1,21 @@
 import fs from 'fs';
 import path from 'path';
 
+// Simple log level helper
+// Levels: 'silent' < 'error' < 'info' < 'debug'
+function getLogLevel() {
+  const envLevel = (process.env.LOG_LEVEL || '').toLowerCase();
+  if (envLevel) return envLevel;
+  // Default: quieter in production, chatty in development
+  return (process.env.NODE_ENV === 'development') ? 'info' : 'error';
+}
+
+function levelAtLeast(level) {
+  const order = { silent: 0, error: 1, info: 2, debug: 3 };
+  const current = getLogLevel();
+  return order[current] >= order[level];
+}
+
 export function validateEnvironmentVariables() {
   const errors = [];
   const warnings = [];
@@ -51,8 +66,10 @@ export function validateEnvironmentVariables() {
 
   // Print warnings
   if (warnings.length > 0) {
-    console.log('\n⚠️  Warnings:');
-    warnings.forEach(warning => console.log(`   - ${warning}`));
+    if (levelAtLeast('info')) {
+      console.log('\n⚠️  Warnings:');
+      warnings.forEach(warning => console.log(`   - ${warning}`));
+    }
   }
 
   return {
@@ -98,17 +115,28 @@ export function logError(context, error) {
   console.error(`[${timestamp}] ❌ ERROR in ${context}:`);
   console.error(`   Message: ${error.message}`);
   
-  if (process.env.DEBUG_MODE === 'true') {
+  if (process.env.DEBUG_MODE === 'true' || levelAtLeast('debug')) {
     console.error(`   Stack: ${error.stack}`);
   }
 }
 
 export function logInfo(message) {
   const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] ℹ️  ${message}`);
+  if (levelAtLeast('info')) {
+    console.log(`[${timestamp}] ℹ️  ${message}`);
+  }
 }
 
 export function logSuccess(message) {
   const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] ✅ ${message}`);
+  if (levelAtLeast('info')) {
+    console.log(`[${timestamp}] ✅ ${message}`);
+  }
+}
+
+export function logDebug(message) {
+  const timestamp = new Date().toISOString();
+  if (process.env.DEBUG_MODE === 'true' || levelAtLeast('debug')) {
+    console.log(`[${timestamp}] 🔍 ${message}`);
+  }
 }

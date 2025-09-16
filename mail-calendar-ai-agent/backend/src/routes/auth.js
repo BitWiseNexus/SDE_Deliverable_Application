@@ -1,7 +1,7 @@
 import express from 'express';
 import { google } from 'googleapis';
 import { createUser, getUserByEmail, logAgentAction, db } from '../database/database.js';
-import { logError, logSuccess, loadGoogleCredentials } from '../utils/validation.js';
+import { logError, logSuccess, loadGoogleCredentials, logInfo, logDebug } from '../utils/validation.js';
 
 const router = express.Router();
 
@@ -102,13 +102,13 @@ router.get('/login', (req, res) => {
 router.get('/google/callback', async (req, res) => {
   const { code, error, state } = req.query;
   
-  console.log('🔍 OAuth Callback Debug Info:');
-  console.log('   Code:', code ? 'Present' : 'Missing');
-  console.log('   Error:', error || 'None');
-  console.log('   State:', state || 'None');
+  logDebug('OAuth Callback Debug Info:');
+  logDebug(`   Code: ${code ? 'Present' : 'Missing'}`);
+  logDebug(`   Error: ${error || 'None'}`);
+  logDebug(`   State: ${state || 'None'}`);
   
   if (error) {
-    console.error('❌ OAuth Error from Google:', error);
+  logError('OAuth Error from Google', new Error(error));
     logError('OAuth Callback', new Error(error));
     return res.send(`
       <html>
@@ -122,7 +122,7 @@ router.get('/google/callback', async (req, res) => {
   }
   
   if (!code) {
-    console.error('❌ No authorization code received');
+  logError('OAuth Callback', new Error('No authorization code received'));
     return res.status(400).send(`
       <html>
         <body style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
@@ -135,39 +135,38 @@ router.get('/google/callback', async (req, res) => {
   }
   
   try {
-    console.log('🔑 Creating OAuth2 client...');
+  logDebug('Creating OAuth2 client...');
     const oauth2Client = createOAuth2Client();
-    console.log('✅ OAuth2 client created successfully');
+  logDebug('OAuth2 client created successfully');
     
     // Exchange code for tokens
-    console.log('🔄 Exchanging authorization code for tokens...');
+  logDebug('Exchanging authorization code for tokens...');
     const { tokens } = await oauth2Client.getToken(code);
-    
-    console.log('✅ Tokens received successfully');
-    console.log('   Access token:', tokens.access_token ? 'Present' : 'Missing');
-    console.log('   Refresh token:', tokens.refresh_token ? 'Present' : 'Missing');
-    console.log('   Expires in:', tokens.expiry_date ? new Date(tokens.expiry_date).toISOString() : 'Not specified');
+  logDebug('Tokens received successfully');
+  logDebug(`   Access token: ${tokens.access_token ? 'Present' : 'Missing'}`);
+  logDebug(`   Refresh token: ${tokens.refresh_token ? 'Present' : 'Missing'}`);
+  logDebug(`   Expires in: ${tokens.expiry_date ? new Date(tokens.expiry_date).toISOString() : 'Not specified'}`);
     
     if (!tokens.access_token) {
       throw new Error('No access token received from Google');
     }
     
     // Get user info
-    console.log('👤 Getting user information...');
+  logDebug('Getting user information...');
     oauth2Client.setCredentials(tokens);
     const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
     const { data: userInfo } = await oauth2.userinfo.get();
     
-    console.log('✅ User info received:');
-    console.log('   Email:', userInfo.email);
-    console.log('   Name:', userInfo.name);
-    console.log('   Verified:', userInfo.verified_email);
+  logDebug('User info received');
+  logDebug(`   Email: ${userInfo.email}`);
+  logDebug(`   Name: ${userInfo.name}`);
+  logDebug(`   Verified: ${userInfo.verified_email}`);
     
     // Save user and tokens to database
-    console.log('💾 Saving user to database...');
+  logDebug('Saving user to database...');
     await createUser(userInfo.email, tokens.access_token, tokens.refresh_token);
     await logAgentAction(userInfo.email, 'user_authenticated', 'success', 'OAuth flow completed');
-    console.log('✅ User saved to database successfully');
+  logDebug('User saved to database successfully');
     
     logSuccess(`🎉 User authenticated successfully: ${userInfo.email}`);
     
@@ -207,11 +206,7 @@ router.get('/google/callback', async (req, res) => {
     `);
     
   } catch (error) {
-    console.error('💥 OAuth token exchange failed:');
-    console.error('   Error type:', error.constructor.name);
-    console.error('   Error message:', error.message);
-    console.error('   Error status:', error.status);
-    console.error('   Error code:', error.code);
+  logError('OAuth token exchange failed', error);
     
     logError('OAuth Token Exchange', error);
     

@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import React, { useState, useEffect } from "react";
 import { useAuth, useUI } from "../hooks/useApi.js";
 import { calendarService } from "../services/api.js";

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext.jsx';
 import { handleApiError } from '../services/api.js';
 
-// Generic API hook
 export const useApi = (apiFunction, dependencies = []) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -102,14 +101,13 @@ export const useAuth = () => {
         type: 'warning',
         message: `Logout warning: ${errorInfo.message}`
       });
-      // Still perform local logout even if server logout fails
       actions.logout();
     }
   };
 
   return {
     ...state.user,
-    loading: checking, // Use the local checking state instead of context loading
+    loading: checking, 
     checkAuthStatus,
     setAuthentication: actions.setAuthentication,
     login,
@@ -146,7 +144,7 @@ export const useProcessing = () => {
 
       actions.addNotification({
         type: 'success',
-        message: `✅ Processing complete! ${results.summary.processedEmails} emails processed, ${results.summary.createdEvents} events created`,
+        message: `Processing complete! ${results.summary.processedEmails} emails processed, ${results.summary.createdEvents} events created`,
         duration: 7000
       });
 

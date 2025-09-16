@@ -1,16 +1,16 @@
 import 'dotenv/config';
 import app from './app.js';
 import { initializeDatabase } from './database/database.js';
-import { validateEnvironmentVariables } from './utils/validation.js';
+import { validateEnvironmentVariables, logInfo } from './utils/validation.js';
 
 const PORT = process.env.PORT || 5000;
 
 async function startServer() {
-  console.log('Starting Mail Calendar AI Agent...\n');
+  logInfo('Starting Mail Calendar AI Agent...');
 
   try {
     // Step 1: Validate environment variables
-    console.log('Validating environment variables...');
+  logInfo('Validating environment variables...');
     const validation = validateEnvironmentVariables();
     if (!validation.isValid) {
       console.error('❌ Environment validation failed:');
@@ -20,43 +20,31 @@ async function startServer() {
       console.log('Get Gemini API key from: https://makersuite.google.com/app/apikey\n');
       process.exit(1);
     }
-    console.log('Environment variables validated\n');
+  logInfo('Environment variables validated');
 
     // Step 2: Initialize database
-    console.log('Initializing database...');
+  logInfo('Initializing database...');
     await initializeDatabase();
-    console.log('Database initialized successfully\n');
+  logInfo('Database initialized successfully');
 
     // Step 3: Start server
     const server = app.listen(PORT, () => {
-      console.log('SERVER STARTED SUCCESSFULLY!');
-      console.log('════════════════════════════════════════════');
-      console.log(`Server:     http://localhost:${PORT}`);
-      console.log(`Health:     http://localhost:${PORT}/health`);
-      console.log(`Auth:       http://localhost:${PORT}/auth/login`);
-      console.log(`Test Creds: http://localhost:${PORT}/auth/test`);
-      console.log(`Process:    POST http://localhost:${PORT}/api/agent/process/:email`);
-      console.log('════════════════════════════════════════════');
-      console.log('Logs will appear below...\n');
-      console.log('NEXT STEPS:');
-      console.log('   1. Visit /auth/test to verify credentials');
-      console.log('   2. Visit /auth/login?redirect=true to authenticate');
-      console.log('   3. Use POST /api/agent/process/:email to run the AI agent\n');
+      logInfo(`Server listening on http://localhost:${PORT}`);
     });
 
     // Graceful shutdown
     process.on('SIGTERM', () => {
-      console.log('\nReceived SIGTERM, shutting down gracefully...');
+      logInfo('Received SIGTERM, shutting down gracefully...');
       server.close(() => {
-        console.log('Server closed');
+        logInfo('Server closed');
         process.exit(0);
       });
     });
 
     process.on('SIGINT', () => {
-      console.log('\nReceived SIGINT, shutting down gracefully...');
+      logInfo('Received SIGINT, shutting down gracefully...');
       server.close(() => {
-        console.log('Server closed');
+        logInfo('Server closed');
         process.exit(0);
       });
     });
