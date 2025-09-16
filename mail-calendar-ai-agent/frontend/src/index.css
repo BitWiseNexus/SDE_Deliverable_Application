@@ -70,7 +70,7 @@
 /* Custom Components */
 @layer components {
   .btn {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
   }
   
   .btn-primary {
@@ -155,4 +155,16 @@
   .gradient-bg {
     background: linear-gradient(135deg, theme('colors.primary.50'), theme('colors.primary.100'));
   }
+}
+
+/* Pointer cursor defaults (plain CSS for broad compatibility) */
+button,
+[role="button"],
+.btn {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
 }
