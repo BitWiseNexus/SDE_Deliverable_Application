@@ -136,8 +136,8 @@ const Settings = () => {
               {auth.authenticated ? 'Authenticated' : 'Not Authenticated'}
             </div>
           </div>
-          <div className="flex gap-2 pt-2">
-            <button className="btn btn-secondary text-xs" onClick={auth.logout}><Shield className="w-3.5 h-3.5" />Logout</button>
+          <div className="flex flex-wrap gap-2 pt-2">
+            <button className="btn btn-secondary text-xs" onClick={auth.logout}>Logout</button>
             <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="btn btn-ghost text-xs"><ExternalLink className="w-3.5 h-3.5" />Permissions</a>
           </div>
         </div>
@@ -270,19 +270,20 @@ const Settings = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8">
+    <div className="flex flex-col lg:flex-row gap-8 pb-24 md:pb-0">
       <aside className="lg:w-60 xl:w-64 flex-shrink-0">
         <div className="rounded-xl border border-slate-200 bg-white/70 backdrop-blur-sm p-3 sticky top-4">
           <nav className="space-y-1">
             {sections.map(section => (
               <button
                 key={section.id}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 border ${
                   activeSection === section.id
-                    ? 'bg-slate-900 text-white shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'bg-slate-900 text-white shadow-sm border-transparent'
+                    : 'text-slate-600 hover:bg-slate-100 border-transparent'
                 }`}
                 onClick={() => setActiveSection(section.id)}
+                onMouseUp={(e) => e.currentTarget.blur()}
               >
                 <section.icon className="w-4 h-4" />
                 {section.name}

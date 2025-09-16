@@ -75,7 +75,7 @@ const Dashboard = () => {
   const stats = dashboardData.stats || {};
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 pb-24 md:pb-0">
       {/* Header / Actions */}
       <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-tr from-white via-slate-50 to-slate-100 p-6 md:p-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">

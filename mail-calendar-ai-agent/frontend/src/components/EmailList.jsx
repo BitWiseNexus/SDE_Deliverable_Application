@@ -65,7 +65,7 @@ const EmailList = () => {
   if (loading) return <div className="flex items-center justify-center py-12"><LoadingSpinner message="Loading processed emails..." /></div>;
 
   return (
-    <div className="space-y-8">
+  <div className="space-y-8 pb-24 md:pb-0">
       {/* Search & Controls */}
       <div className="flex flex-col xl:flex-row gap-6 items-start xl:items-center justify-between">
         <div className="w-full max-w-lg">

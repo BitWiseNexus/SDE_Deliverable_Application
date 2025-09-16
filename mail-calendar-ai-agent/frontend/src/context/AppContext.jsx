@@ -159,6 +159,36 @@ export const AppProvider = ({ children }) => {
     });
   }, [state.ui.notifications]);
 
+  // Restore activeTab from localStorage on first mount (one-time hash fallback for backward compat)
+  useEffect(() => {
+    try {
+      const allowedTabs = ['dashboard', 'emails', 'calendar', 'settings'];
+      const stored = localStorage.getItem('activeTab');
+      let tabFromHash = null;
+      const hash = window.location.hash || '';
+      if (!stored && hash.startsWith('#tab=')) {
+        tabFromHash = decodeURIComponent(hash.slice(5));
+      }
+      const candidate = stored || tabFromHash;
+      if (candidate && allowedTabs.includes(candidate) && candidate !== state.ui.activeTab) {
+        actions.setUI({ activeTab: candidate });
+      }
+      // Strip any hash from URL for clean appearance
+      if (window.location.hash) {
+        window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+      }
+    } catch {}
+  }, []);
+
+  // Sync activeTab to localStorage only (no URL hash)
+  useEffect(() => {
+    try {
+      const tab = state.ui.activeTab;
+      if (!tab) return;
+      localStorage.setItem('activeTab', tab);
+    } catch {}
+  }, [state.ui.activeTab]);
+
   return (
     <AppContext.Provider value={{ state, actions }}>
       {children}
