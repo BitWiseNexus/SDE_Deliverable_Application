@@ -55,6 +55,9 @@ const Notifications = () => {
     return null;
   }
 
+  const sanitize = (text) =>
+    typeof text === 'string' ? text.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '') : text;
+
   return (
     <div className="fixed top-4 right-4 z-50 space-y-3 max-w-sm">
       {ui.notifications.map((notification) => {
@@ -63,7 +66,7 @@ const Notifications = () => {
         return (
           <div
             key={notification.id}
-            className={`${getNotificationClasses(notification.type)} fade-in`}
+            className={`${getNotificationClasses(notification.type)} animate-fade-in`}
           >
             <Icon className={getIconClasses(notification.type)} />
             
@@ -71,7 +74,7 @@ const Notifications = () => {
               {notification.title && (
                 <div className="font-semibold text-sm mb-1">{notification.title}</div>
               )}
-              <div className="text-sm leading-relaxed">{notification.message}</div>
+              <div className="text-sm leading-relaxed">{sanitize(notification.message)}</div>
             </div>
             
             <button

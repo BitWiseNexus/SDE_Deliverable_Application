@@ -16,8 +16,8 @@ const LoadingSpinner = ({ message = 'Loading...', size = 'medium', className = '
 
   return (
     <div className={`flex flex-col items-center justify-center ${containerSizeClasses[size]} ${className}`}>
-      <Loader2 className={`${sizeClasses[size]} animate-spin text-blue-600`} />
-      {message && <span className="text-gray-600 font-medium">{message}</span>}
+      <Loader2 className={`${sizeClasses[size]} animate-spin text-primary-600`} />
+      {message && <span className="text-gray-600 font-medium mt-1 text-center">{message}</span>}
     </div>
   );
 };
