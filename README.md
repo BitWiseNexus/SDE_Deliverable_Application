@@ -42,7 +42,7 @@ cd mail-calendar-ai-agent
 cd backend
 npm install
 
-# Frontend (optional)
+# Frontend
 cd ../frontend
 npm install
 ```
@@ -231,6 +231,7 @@ Key files:
 ## License
 
 MIT License. See LICENSE for details.
+
 
 
 
