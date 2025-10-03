@@ -1,8 +1,3 @@
-﻿## Name: Aditya Rehpade
-## College: IIT Bhilai
-## Department: Electrical Engineering
-
-
 # Mail → Calendar AI Agent
 
 Mail → Calendar AI Agent reads your unread Gmail messages, uses Gemini to extract event details (title, date/time, attendees, location), and automatically creates Google Calendar events after you sign in with Google OAuth 2.0. The backend is Node.js/Express with SQLite. An Vite + React frontend is included.
@@ -231,6 +226,7 @@ Key files:
 ## License
 
 MIT License. See LICENSE for details.
+
 
 
 
